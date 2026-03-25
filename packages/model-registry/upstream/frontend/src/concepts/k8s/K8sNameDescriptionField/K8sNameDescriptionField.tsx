@@ -6,6 +6,7 @@ import {
   HelperTextItem,
   TextArea,
   TextInput,
+  ValidatedOptions,
 } from '@patternfly/react-core';
 import ResourceNameDefinitionTooltip from '~/concepts/k8s/ResourceNameDefinitionTooltip';
 import FormFieldset from '~/app/pages/modelRegistry/screens/components/FormFieldset';
@@ -18,7 +19,6 @@ import {
 import { handleUpdateLogic, setupDefaults } from './utils';
 import ResourceNameField from './ResourceNameField';
 
-/** Companion data hook */
 export const useK8sNameDescriptionFieldData = (
   configuration: UseK8sNameDescriptionDataConfiguration = {},
 ): UseK8sNameDescriptionFieldData => {
@@ -43,10 +43,6 @@ type K8sNameDescriptionFieldProps = {
   hideDescription?: boolean;
 };
 
-/**
- * Use in place of any K8s Resource creation / edit.
- * @see useK8sNameDescriptionFieldData
- */
 const K8sNameDescriptionField: React.FC<K8sNameDescriptionFieldProps> = ({
   data,
   onDataChange,
@@ -58,7 +54,11 @@ const K8sNameDescriptionField: React.FC<K8sNameDescriptionFieldProps> = ({
 }) => {
   const [showK8sField, setShowK8sField] = React.useState(false);
 
-  const { name, description, k8sName } = data;
+  const { name, description, nameState, k8sName } = data;
+
+  const nameValidated = nameState.invalidLength
+    ? ValidatedOptions.error
+    : ValidatedOptions.default;
 
   const nameInput = (
     <TextInput
@@ -69,6 +69,7 @@ const K8sNameDescriptionField: React.FC<K8sNameDescriptionFieldProps> = ({
       value={name}
       onChange={(_e, value) => onDataChange?.('name', value)}
       isRequired
+      validated={nameValidated}
     />
   );
 
@@ -91,6 +92,13 @@ const K8sNameDescriptionField: React.FC<K8sNameDescriptionFieldProps> = ({
       <FormGroup label={nameLabel} isRequired fieldId={`${dataTestId}-name`}>
         <FormFieldset component={nameInput} field="Name" />
       </FormGroup>
+      {nameState.invalidLength && (
+        <HelperText>
+          <HelperTextItem variant="error" data-testid={`${dataTestId}-name-error`}>
+            Cannot exceed {nameState.maxLength} characters
+          </HelperTextItem>
+        </HelperText>
+      )}
       {nameHelperText || (!showK8sField && !k8sName.state.immutable) ? (
         <HelperText>
           {nameHelperText && <HelperTextItem>{nameHelperText}</HelperTextItem>}

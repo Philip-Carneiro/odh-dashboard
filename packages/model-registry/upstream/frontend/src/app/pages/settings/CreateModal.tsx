@@ -86,6 +86,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, refresh }) => {
 
   const canSubmit = () =>
     hasContent(nameDescData.name) &&
+    !nameDescData.nameState.invalidLength &&
     hasContent(nameDescData.k8sName.value) &&
     !nameDescData.k8sName.state.invalidCharacters &&
     !nameDescData.k8sName.state.invalidLength &&
@@ -98,7 +99,6 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, refresh }) => {
   const onSubmit = async () => {
     setError(undefined);
 
-    // This is a simplified payload for the BFF, not a full K8s object.
     const payload: ModelRegistryPayload = {
       modelRegistry: {
         metadata: {
@@ -294,8 +294,6 @@ const CreateModal: React.FC<CreateModalProps> = ({ onClose, refresh }) => {
             >
               {databaseInput}
             </ThemeAwareFormGroupWrapper>
-
-            {/* ... Optional TLS section ... */}
           </FormSection>
 
           {error && (

@@ -5,6 +5,7 @@ import {
 } from './types';
 
 const MAX_K8S_NAME_LENGTH = 253;
+const MAX_NAME_LENGTH = 253;
 
 /**
  * Translates a name to a k8s-safe value.
@@ -31,8 +32,6 @@ export const checkValidK8sName = (
     return { valid: true, invalidCharacters: false };
   }
 
-  // Kubernetes name must consist of lower case alphanumeric characters or '-'
-  // and must start and end with an alphanumeric character
   const valid = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/.test(value);
   const invalidCharacters = !/^[a-z0-9-]*$/.test(value);
 
@@ -42,8 +41,9 @@ export const checkValidK8sName = (
 export const setupDefaults = (
   configuration: UseK8sNameDescriptionDataConfiguration,
 ): K8sNameDescriptionFieldData => {
-  const { initialData, editableK8sName, maxK8sNameLength } = configuration;
-  const maxLength = maxK8sNameLength ?? MAX_K8S_NAME_LENGTH;
+  const { initialData, editableK8sName, maxK8sNameLength, maxNameLength } = configuration;
+  const k8sMaxLength = maxK8sNameLength ?? MAX_K8S_NAME_LENGTH;
+  const nameMaxLength = maxNameLength ?? MAX_NAME_LENGTH;
 
   const name = initialData?.name ?? '';
   const description = initialData?.description ?? '';
@@ -52,13 +52,17 @@ export const setupDefaults = (
   return {
     name,
     description,
+    nameState: {
+      invalidLength: name.length > nameMaxLength,
+      maxLength: nameMaxLength,
+    },
     k8sName: {
       value: k8sName,
       state: {
         immutable: !!(k8sName && !editableK8sName),
         invalidCharacters: false,
-        invalidLength: k8sName.length > maxLength,
-        maxLength,
+        invalidLength: k8sName.length > k8sMaxLength,
+        maxLength: k8sMaxLength,
         touched: !!k8sName,
       },
     },
@@ -96,6 +100,10 @@ export const handleUpdateLogic =
       return {
         ...currentData,
         name: value,
+        nameState: {
+          ...currentData.nameState,
+          invalidLength: value.length > currentData.nameState.maxLength,
+        },
         k8sName: {
           value: k8sValue,
           state: {
